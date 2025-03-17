@@ -1,5 +1,5 @@
 import { ConcursoForm } from "@/components/forms/concurso-form"
-import prisma from "@/lib/prisma"
+import { prisma } from "@/lib/prisma"
 
 export default async function NewConcursoPage() {
   const companies = await prisma.company.findMany({
