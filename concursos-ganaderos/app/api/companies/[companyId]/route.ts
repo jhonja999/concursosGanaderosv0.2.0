@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs"
-import prisma from "@/lib/prisma"
+import { auth } from "@clerk/nextjs/server"
+import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request, { params }: { params: { companyId: string } }) {
   try {
@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: { params: { companyId: strin
 
 export async function PATCH(req: Request, { params }: { params: { companyId: string } }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 })
@@ -71,7 +71,7 @@ export async function PATCH(req: Request, { params }: { params: { companyId: str
 
 export async function DELETE(req: Request, { params }: { params: { companyId: string } }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 })

@@ -80,7 +80,7 @@ export default async function DashboardLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/reports">
+                  <Link href={"/dashboard/reports"}>
                     <PieChart className="h-4 w-4" />
                     <span>Reportes</span>
                   </Link>
@@ -119,4 +119,3 @@ export default async function DashboardLayout({
     </SidebarProvider>
   )
 }
-
