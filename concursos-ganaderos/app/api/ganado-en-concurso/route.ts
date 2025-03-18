@@ -21,12 +21,32 @@ export async function POST(req: Request) {
     if (!concursoId) {
       return new NextResponse("Concurso ID is required", { status: 400 })
     }
+
+    // Verificar si el ganado existe
+    const ganado = await prisma.ganado.findUnique({
+      where: { id: ganadoId },
+    })
     
-    // Verificar si ya existe la relación
-    const existingRelation = await prisma.ganadoEnConcurso.findFirst({
+    if (!ganado) {
+      return new NextResponse("El ganado no existe", { status: 404 })
+    }
+    
+    // Verificar si el concurso existe
+    const concurso = await prisma.concurso.findUnique({
+      where: { id: concursoId },
+    })
+    
+    if (!concurso) {
+      return new NextResponse("El concurso no existe", { status: 404 })
+    }
+    
+    // Verificar si ya existe la relación utilizando el constraint único
+    const existingRelation = await prisma.ganadoEnConcurso.findUnique({
       where: {
-        ganadoId,
-        concursoId,
+        ganadoId_concursoId: {
+          ganadoId,
+          concursoId,
+        },
       },
     })
     
@@ -36,56 +56,58 @@ export async function POST(req: Request) {
       })
     }
     
-    // Crear la relación
+    // Crear la relación - asegúrate de que posicion es un número o null
+    const posicionValue = posicion === undefined || posicion === "" ? null : Number(posicion)
+    
     const ganadoEnConcurso = await prisma.ganadoEnConcurso.create({
       data: {
         ganadoId,
         concursoId,
-        posicion,
+        posicion: posicionValue,
       },
     })
     
     return NextResponse.json(ganadoEnConcurso)
   } catch (error) {
     console.error("[GANADO_EN_CONCURSO_POST]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    return new NextResponse(`Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 500 })
   }
 }
 
 export async function GET(req: Request) {
-    try {
-      const { searchParams } = new URL(req.url)
-      const concursoId = searchParams.get("concursoId")
-      const ganadoId = searchParams.get("ganadoId")
-      
-      // Define a more specific type instead of 'any'
-      const whereClause: {
-        concursoId?: string;
-        ganadoId?: string;
-      } = {};
-      
-      if (concursoId) {
-        whereClause.concursoId = concursoId;
-      }
-      
-      if (ganadoId) {
-        whereClause.ganadoId = ganadoId;
-      }
-      
-      const ganadoEnConcurso = await prisma.ganadoEnConcurso.findMany({
-        where: whereClause,
-        include: {
-          ganado: true,
-          concurso: true,
-        },
-        orderBy: {
-          posicion: "asc",
-        },
-      })
-      
-      return NextResponse.json(ganadoEnConcurso)
-    } catch (error) {
-      console.error("[GANADO_EN_CONCURSO_GET]", error)
-      return new NextResponse("Internal error", { status: 500 })
+  try {
+    const { searchParams } = new URL(req.url)
+    const concursoId = searchParams.get("concursoId")
+    const ganadoId = searchParams.get("ganadoId")
+    
+    // Define a more specific type instead of 'any'
+    const whereClause: {
+      concursoId?: string;
+      ganadoId?: string;
+    } = {};
+    
+    if (concursoId) {
+      whereClause.concursoId = concursoId;
     }
+    
+    if (ganadoId) {
+      whereClause.ganadoId = ganadoId;
+    }
+    
+    const ganadoEnConcurso = await prisma.ganadoEnConcurso.findMany({
+      where: whereClause,
+      include: {
+        ganado: true,
+        concurso: true,
+      },
+      orderBy: {
+        posicion: "asc",
+      },
+    })
+    
+    return NextResponse.json(ganadoEnConcurso)
+  } catch (error) {
+    console.error("[GANADO_EN_CONCURSO_GET]", error)
+    return new NextResponse(`Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 500 })
   }
+}

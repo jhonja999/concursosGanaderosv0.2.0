@@ -80,7 +80,7 @@ export function ConcursoForm({ initialData, companies }: ConcursoFormProps) {
 
   async function onSubmit(data: ConcursoFormValues) {
     setIsLoading(true)
-
+    
     try {
       if (initialData?.id) {
         // Update existing concurso

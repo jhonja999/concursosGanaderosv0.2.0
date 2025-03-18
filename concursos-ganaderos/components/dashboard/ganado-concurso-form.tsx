@@ -1,15 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 // Define the form schema with Zod
 const ganadoConcursoFormSchema = z.object({
@@ -17,25 +31,28 @@ const ganadoConcursoFormSchema = z.object({
     required_error: "Debe seleccionar un ganado.",
   }),
   posicion: z.number().optional(),
-})
+});
 
-type GanadoConcursoFormValues = z.infer<typeof ganadoConcursoFormSchema>
+type GanadoConcursoFormValues = z.infer<typeof ganadoConcursoFormSchema>;
 
 interface Ganado {
-  id: string
-  nombre: string
-  raza?: string | null
-  sexo: "MACHO" | "HEMBRA"
+  id: string;
+  nombre: string;
+  raza?: string | null;
+  sexo: "MACHO" | "HEMBRA";
 }
 
 interface GanadoConcursoFormProps {
-  concursoId: string
-  ganadoDisponible: Ganado[]
+  concursoId: string;
+  ganadoDisponible: Ganado[];
 }
 
-export function GanadoConcursoForm({ concursoId, ganadoDisponible }: GanadoConcursoFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+export function GanadoConcursoForm({
+  concursoId,
+  ganadoDisponible,
+}: GanadoConcursoFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Define form with default values
   const form = useForm<GanadoConcursoFormValues>({
@@ -44,10 +61,10 @@ export function GanadoConcursoForm({ concursoId, ganadoDisponible }: GanadoConcu
       ganadoId: "",
       posicion: undefined,
     },
-  })
+  });
 
   async function onSubmit(data: GanadoConcursoFormValues) {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const response = await fetch("/api/ganado-en-concurso", {
@@ -60,21 +77,23 @@ export function GanadoConcursoForm({ concursoId, ganadoDisponible }: GanadoConcu
           concursoId,
           posicion: data.posicion,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al asignar ganado al concurso")
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Error al asignar ganado al concurso"
+        );
       }
 
-      toast.success("Ganado asignado al concurso correctamente.")
-      form.reset()
-      router.refresh()
+      toast.success("Ganado asignado al concurso correctamente.");
+      form.reset();
+      router.refresh();
     } catch (error) {
-      console.error(error)
-      toast.error("Ocurrió un error al asignar el ganado al concurso.")
+      console.error(error);
+      toast.error("Ocurrió un error al asignar el ganado al concurso.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -96,12 +115,15 @@ export function GanadoConcursoForm({ concursoId, ganadoDisponible }: GanadoConcu
                 <SelectContent>
                   {ganadoDisponible.map((ganado) => (
                     <SelectItem key={ganado.id} value={ganado.id}>
-                      {ganado.nombre} - {ganado.raza || "Sin raza"} ({ganado.sexo === "MACHO" ? "Macho" : "Hembra"})
+                      {ganado.nombre} - {ganado.raza || "Sin raza"} (
+                      {ganado.sexo === "MACHO" ? "Macho" : "Hembra"})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Seleccione el ganado que desea asignar a este concurso.</FormDescription>
+              <FormDescription>
+                Seleccione el ganado que desea asignar a este concurso.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -119,26 +141,36 @@ export function GanadoConcursoForm({ concursoId, ganadoDisponible }: GanadoConcu
                   placeholder="Posición en el concurso"
                   {...field}
                   value={field.value === undefined ? "" : field.value}
-                  onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(
+                      value === "" ? undefined : parseInt(value, 10)
+                    );
+                  }}
                 />
               </FormControl>
-              <FormDescription>Posición del ganado en el concurso (para ordenamiento).</FormDescription>
+              <FormDescription>
+                Posición del ganado en el concurso (para ordenamiento).
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={isLoading || ganadoDisponible.length === 0}>
+        <Button
+          type="submit"
+          disabled={isLoading || ganadoDisponible.length === 0}
+        >
           {isLoading ? "Asignando..." : "Asignar ganado al concurso"}
         </Button>
 
         {ganadoDisponible.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            No hay ganado disponible para asignar a este concurso. Cree nuevo ganado primero.
+            No hay ganado disponible para asignar a este concurso. Cree nuevo
+            ganado primero.
           </p>
         )}
       </form>
     </Form>
-  )
+  );
 }
-

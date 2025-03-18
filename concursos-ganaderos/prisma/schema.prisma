@@ -108,7 +108,7 @@ model Ganado {
   id           String   @id @default(cuid()) @map("_id")
   nombre       String
   fechaNac     DateTime?
-  diasNacida   Int?
+  /* diasNacida   Int? */
   categoria    String?
   subcategoria String?
   establo      String?
