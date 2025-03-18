@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request, { params }: { params: { ganadoId: string } }) {
@@ -45,7 +45,6 @@ export async function PATCH(req: Request, { params }: { params: { ganadoId: stri
     const {
       nombre,
       fechaNac,
-      diasNacida,
       categoria,
       subcategoria,
       establo,
@@ -73,6 +72,19 @@ export async function PATCH(req: Request, { params }: { params: { ganadoId: stri
       return new NextResponse("Ganado ID is required", { status: 400 })
     }
 
+    // Calcular días desde nacimiento si hay fecha de nacimiento
+    let diasNacida = null
+    if (fechaNac) {
+      const today = new Date()
+      const birthDate = new Date(fechaNac)
+      const diffTime = Math.abs(today.getTime() - birthDate.getTime())
+      diasNacida = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    }
+
+    // Verificar si el usuario es admin para asignar a concurso
+    const user = await currentUser()
+    const isAdmin = user?.publicMetadata.role === "ADMIN"
+
     // Actualizar el ganado
     const ganado = await prisma.ganado.update({
       where: {
@@ -97,8 +109,8 @@ export async function PATCH(req: Request, { params }: { params: { ganadoId: stri
       },
     })
 
-    // Si se proporciona un concursoId, asignar el ganado al concurso
-    if (concursoId && concursoId !== "none") {
+    // Si se proporciona un concursoId y el usuario es admin, asignar el ganado al concurso
+    if (concursoId && concursoId !== "none" && isAdmin) {
       // Verificar si ya existe la relación
       const existingRelation = await prisma.ganadoEnConcurso.findFirst({
         where: {

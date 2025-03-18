@@ -382,3 +382,5 @@ model CartItem {
   @@index([userId])
   @@index([productId])
 }
+
+

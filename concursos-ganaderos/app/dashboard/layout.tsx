@@ -146,7 +146,7 @@ export default async function DashboardLayout({
           </SidebarFooter>
         </Sidebar>
         <div className="flex-1">
-          <header className="border-b bg-white">
+          <header className="border-b">
             <div className="flex h-16 items-center px-6">
               <SidebarTrigger className="mr-2" />
               <div className="ml-2 text-lg font-medium">Panel de Administración</div>

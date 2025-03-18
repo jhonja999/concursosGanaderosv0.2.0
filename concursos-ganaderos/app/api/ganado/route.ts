@@ -1,87 +1,19 @@
 import { NextResponse } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { Ganado, Prisma } from "@prisma/client";
-
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const isFeatured = searchParams.get("isFeatured");
-    const isPublished = searchParams.get("isPublished");
-    const sexo = searchParams.get("sexo");
-    const categoria = searchParams.get("categoria");
-    const concursoId = searchParams.get("concursoId");
-
-    const whereClause: Prisma.GanadoWhereInput = {};
-
-    if (isFeatured === "true") {
-      whereClause.isFeatured = true;
-    }
-
-    if (isPublished === "true") {
-      whereClause.isPublished = true;
-    }
-
-    if (sexo) {
-      whereClause.sexo = sexo as Ganado["sexo"];
-    }
-
-    if (categoria) {
-      whereClause.categoria = categoria;
-    }
-
-    const includeClause: Prisma.GanadoInclude = {
-      ganadoEnConcurso: {
-        include: {
-          concurso: true,
-        },
-      },
-    };
-
-    if (concursoId && includeClause.ganadoEnConcurso && typeof includeClause.ganadoEnConcurso === 'object' && 'where' in includeClause.ganadoEnConcurso) {
-      includeClause.ganadoEnConcurso.where = {
-        concursoId,
-      };
-    }
-
-    const ganado = await prisma.ganado.findMany({
-      where: whereClause,
-      include: includeClause,
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    if (concursoId) {
-      const filteredGanado = ganado.filter((g) => g.ganadoEnConcurso.length > 0);
-      return NextResponse.json(filteredGanado);
-    }
-
-    return NextResponse.json(ganado);
-  } catch (error) {
-    console.error("[GANADO_GET]", error);
-    return new NextResponse("Internal error", { status: 500 });
-  }
-}
-
-
-/* 
-import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs"
-import prisma from "@/lib/prisma"
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth();
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json()
+    const body = await req.json();
     const {
       nombre,
       fechaNac,
-      diasNacida,
       categoria,
       subcategoria,
       establo,
@@ -94,23 +26,24 @@ export async function POST(req: Request) {
       puntaje,
       isFeatured,
       isPublished,
-      concursoId, // Para asignar a un concurso
-    } = body
+      concursoId,
+    } = body;
 
     if (!nombre) {
-      return new NextResponse("Nombre is required", { status: 400 })
+      return new NextResponse("Nombre is required", { status: 400 });
     }
 
     if (!sexo) {
-      return new NextResponse("Sexo is required", { status: 400 })
+      return new NextResponse("Sexo is required", { status: 400 });
     }
 
-    // Crear el ganado
+    const user = await currentUser();
+    const isAdmin = user?.publicMetadata.role === "admin";
+
     const ganado = await prisma.ganado.create({
       data: {
         nombre,
         fechaNac,
-        diasNacida,
         categoria,
         subcategoria,
         establo,
@@ -124,94 +57,65 @@ export async function POST(req: Request) {
         isFeatured,
         isPublished,
       },
-    })
+    });
 
-    // Si se proporciona un concursoId, asignar el ganado al concurso
-    if (concursoId && concursoId !== "none") {
+    if (concursoId && concursoId !== "none" && isAdmin) {
       await prisma.ganadoEnConcurso.create({
         data: {
           ganadoId: ganado.id,
           concursoId,
         },
-      })
+      });
     }
 
-    return NextResponse.json(ganado)
+    return NextResponse.json(ganado);
   } catch (error) {
-    console.error("[GANADO_POST]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    console.error("[GANADO_POST]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 }
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url)
-    const isFeatured = searchParams.get("isFeatured")
-    const isPublished = searchParams.get("isPublished")
-    const sexo = searchParams.get("sexo")
-    const categoria = searchParams.get("categoria")
-    const concursoId = searchParams.get("concursoId")
+    const { searchParams } = new URL(req.url);
+    const isFeatured = searchParams.get("isFeatured") === "true";
+    const isPublished = searchParams.get("isPublished") === "true";
+    const sexo = searchParams.get("sexo") || undefined;
+    const categoria = searchParams.get("categoria") || undefined;
+    const concursoId = searchParams.get("concursoId") || undefined;
 
-    const whereClause: any = {}
-    let includeClause: any = {}
+    const whereClause: Record<string, unknown> = {};
+    const includeClause: Record<string, unknown> = {
+      ganadoEnConcurso: {
+        include: { concurso: true },
+      },
+    };
 
-    if (isFeatured === "true") {
-      whereClause.isFeatured = true
-    }
+    if (isFeatured) whereClause.isFeatured = true;
+    if (isPublished) whereClause.isPublished = true;
+    if (sexo) whereClause.sexo = sexo;
+    if (categoria) whereClause.categoria = categoria;
 
-    if (isPublished === "true") {
-      whereClause.isPublished = true
-    }
-
-    if (sexo) {
-      whereClause.sexo = sexo
-    }
-
-    if (categoria) {
-      whereClause.categoria = categoria
-    }
-
-    // Si se proporciona un concursoId, filtrar por ganado en ese concurso
     if (concursoId) {
-      includeClause = {
-        ganadoEnConcurso: {
-          where: {
-            concursoId,
-          },
-          include: {
-            concurso: true,
-          },
-        },
-      }
-    } else {
-      includeClause = {
-        ganadoEnConcurso: {
-          include: {
-            concurso: true,
-          },
-        },
-      }
+      includeClause.ganadoEnConcurso = {
+        where: { concursoId },
+        include: { concurso: true },
+      };
     }
 
     const ganado = await prisma.ganado.findMany({
       where: whereClause,
       include: includeClause,
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
+      orderBy: { createdAt: "desc" },
+    });
 
-    // Si se filtró por concursoId, devolver solo el ganado que está en ese concurso
     if (concursoId) {
-      const filteredGanado = ganado.filter((g) => g.ganadoEnConcurso.length > 0)
-      return NextResponse.json(filteredGanado)
+      return NextResponse.json(ganado.filter((g) => g.ganadoEnConcurso.length > 0));
     }
 
-    return NextResponse.json(ganado)
+    return NextResponse.json(ganado);
   } catch (error) {
-    console.error("[GANADO_GET]", error)
-    return new NextResponse("Internal error", { status: 500 })
+    console.error("[GANADO_GET]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 }
-
- */
