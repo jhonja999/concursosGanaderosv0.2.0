@@ -3,9 +3,18 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CategoriesTable } from "@/components/dashboard/categories-table"
 
+export const revalidate = 60 // Revalida cada 60s
+
+interface Category {
+  id: string
+  codigo: string
+  nombre: string
+  descripcion?: string
+}
+
 export default async function CategoriesPage() {
-  // For this example, we'll simulate categories since they're not in the schema
-  const categories = [
+  // Simulación de categorías mientras se integran con la base de datos
+  const categories: Category[] = [
     { id: "1", codigo: "A", nombre: "Dientes de Leche", descripcion: "Categoría para ganado joven" },
     { id: "2", codigo: "B", nombre: "Dos Dientes", descripcion: "Categoría para ganado de edad media" },
     { id: "3", codigo: "C", nombre: "Cuatro Dientes", descripcion: "Categoría para ganado adulto" },
@@ -27,9 +36,7 @@ export default async function CategoriesPage() {
           </Button>
         </Link>
       </div>
-
       <CategoriesTable categories={categories} />
     </div>
   )
 }
-

@@ -19,7 +19,9 @@ export function WelcomeBanner() {
   return (
     <Card className="bg-primary text-primary-foreground">
       <CardHeader>
-        <CardTitle className="text-xl">{greeting}, Administrador</CardTitle>
+        <CardTitle className="text-xl">
+          {greeting}, {userId ? `Usuario ${userId}` : "Administrador"}
+        </CardTitle>
         <CardDescription className="text-primary-foreground/80">
           Bienvenido al panel de administración de Concursos Ganaderos
         </CardDescription>
@@ -33,4 +35,3 @@ export function WelcomeBanner() {
     </Card>
   )
 }
-

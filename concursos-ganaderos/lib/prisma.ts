@@ -25,3 +25,4 @@ prisma.$connect().then(() => {
 }).catch((error: unknown) => {
   console.error("Error al conectar con la base de datos:", error);
 });
+

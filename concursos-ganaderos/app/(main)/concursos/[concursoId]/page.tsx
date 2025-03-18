@@ -8,9 +8,13 @@ import { GanadoTable } from "@/components/ganado/ganado-table"
 import { GanadoGrid } from "@/components/ganado/ganado-grid"
 import { prisma } from "@/lib/prisma"
 
+
 interface ConcursoPageProps {
-  params: {
-    concursoId: string
+  params: { 
+    concursoId: string 
+  }
+  searchParams?: {
+    [key: string]: string | string[] | undefined
   }
 }
 
@@ -30,7 +34,7 @@ export default async function ConcursoPage({ params }: ConcursoPageProps) {
   })
 
   if (!concurso || !concurso.isPublished) {
-    notFound()
+    return notFound()
   }
 
   return (
@@ -48,12 +52,7 @@ export default async function ConcursoPage({ params }: ConcursoPageProps) {
           <span>Organizado por {concurso.company.nombre}</span>
           <span className="mx-2">•</span>
           <span>{formatDate(concurso.fechaInicio)}</span>
-          {concurso.fechaFin && (
-            <>
-              <span className="mx-2">-</span>
-              <span>{formatDate(concurso.fechaFin)}</span>
-            </>
-          )}
+          {concurso.fechaFin && <span className="mx-2">- {formatDate(concurso.fechaFin)}</span>}
         </div>
         {concurso.descripcion && <p className="mt-4 max-w-3xl text-muted-foreground">{concurso.descripcion}</p>}
       </div>
@@ -78,4 +77,3 @@ export default async function ConcursoPage({ params }: ConcursoPageProps) {
     </div>
   )
 }
-

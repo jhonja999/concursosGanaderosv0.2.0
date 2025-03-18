@@ -1,27 +1,20 @@
-import { Suspense } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+
 import { formatDate } from "@/lib/utils"
 import { prisma } from "@/lib/prisma"
 
+export const revalidate = 60 // Revalida cada 60s
+
 export async function ConcursosList() {
   const concursos = await prisma.concurso.findMany({
-    where: {
-      isPublished: true,
-    },
+    where: { isPublished: true },
     include: {
       company: true,
-      ganadoEnConcurso: {
-        include: {
-          ganado: true,
-        },
-      },
+      ganadoEnConcurso: { include: { ganado: true } },
     },
-    orderBy: {
-      fechaInicio: "desc",
-    },
+    orderBy: { fechaInicio: "desc" },
   })
 
   if (concursos.length === 0) {
@@ -51,9 +44,7 @@ export async function ConcursosList() {
           </CardContent>
           <CardFooter>
             <Link href={`/concursos/${concurso.id}`} className="w-full">
-              <Button variant="default" className="w-full">
-                Ver concurso
-              </Button>
+              <Button className="w-full">Ver concurso</Button>
             </Link>
           </CardFooter>
         </Card>
@@ -63,6 +54,8 @@ export async function ConcursosList() {
 }
 
 export default async function ConcursosPage() {
+  const concursos = await ConcursosList()
+
   return (
     <div className="container py-10">
       <div className="mb-8">
@@ -70,29 +63,7 @@ export default async function ConcursosPage() {
         <p className="text-muted-foreground mt-2">Explora todos los concursos ganaderos disponibles</p>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-10 w-full" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        }
-      >
-        <ConcursosList />
-      </Suspense>
+      {concursos}
     </div>
   )
 }
-

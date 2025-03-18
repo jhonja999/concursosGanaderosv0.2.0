@@ -88,7 +88,7 @@ model Concurso {
   fechaInicio DateTime
   fechaFin    DateTime?
   isFeatured  Boolean  @default(false)
-  isPublished Boolean  @default(false) // Controlar si se muestra públicamente
+  isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -99,6 +99,7 @@ model Concurso {
   // Relación N-N con Ganado
   ganadoEnConcurso GanadoEnConcurso[]
 }
+
 
 // ---------------------------------------------------------
 // MODELO DE GANADO

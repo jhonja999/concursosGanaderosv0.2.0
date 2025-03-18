@@ -25,9 +25,11 @@ const ganadoFormSchema = z.object({
     message: "El nombre debe tener al menos 2 caracteres.",
   }),
   fechaNac: z.date().optional(),
+  diasNacida: z.number().optional().nullable(),
   categoria: z.string().optional(),
   subcategoria: z.string().optional(),
   establo: z.string().optional(),
+  remate: z.boolean().optional(),
   propietario: z.string().optional(),
   descripcion: z.string().optional(),
   raza: z.string().optional(),
@@ -35,6 +37,7 @@ const ganadoFormSchema = z.object({
     required_error: "Debe seleccionar el sexo.",
   }),
   numRegistro: z.string().optional(),
+  puntaje: z.number().optional().nullable(),
   concursoId: z.string().optional(),
   isPublished: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
@@ -47,14 +50,17 @@ interface Ganado {
   id?: string
   nombre: string
   fechaNac?: Date | null
+  diasNacida?: number | null
   categoria?: string | null
   subcategoria?: string | null
   establo?: string | null
+  remate?: boolean | null
   propietario?: string | null
   descripcion?: string | null
   raza?: string | null
   sexo: "MACHO" | "HEMBRA"
   numRegistro?: string | null
+  puntaje?: number | null
   isPublished: boolean
   isFeatured: boolean
 }
@@ -77,8 +83,8 @@ interface GanadoFormProps {
 }
 
 export function GanadoForm({ initialData, concursos, categories }: GanadoFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Define form with default values
   const form = useForm<GanadoFormValues>({
@@ -86,22 +92,25 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
     defaultValues: {
       nombre: initialData?.nombre || "",
       fechaNac: initialData?.fechaNac ? new Date(initialData.fechaNac) : undefined,
+      diasNacida: initialData?.diasNacida || null,
       categoria: initialData?.categoria || "",
       subcategoria: initialData?.subcategoria || "",
       establo: initialData?.establo || "",
+      remate: initialData?.remate || false,
       propietario: initialData?.propietario || "",
       descripcion: initialData?.descripcion || "",
       raza: initialData?.raza || "",
       sexo: initialData?.sexo || "MACHO",
       numRegistro: initialData?.numRegistro || "",
+      puntaje: initialData?.puntaje || null,
       concursoId: "",
       isPublished: initialData?.isPublished || false,
       isFeatured: initialData?.isFeatured || false,
     },
-  })
+  });
 
   async function onSubmit(data: GanadoFormValues) {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       if (initialData?.id) {
@@ -112,14 +121,13 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        })
+        });
 
         if (!response.ok) {
-          throw new Error("Error al actualizar el ganado")
+          throw new Error("Error al actualizar el ganado");
         }
 
-        toast("El ganado ha sido actualizado correctamente.",
-        )
+        toast.success("Ganado actualizado correctamente.");
       } else {
         // Create new ganado
         const response = await fetch("/api/ganado", {
@@ -128,24 +136,22 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        })
+        });
 
         if (!response.ok) {
-          throw new Error("Error al crear el ganado")
+          throw new Error("Error al crear el ganado");
         }
 
-        toast("El ganado ha sido creado correctamente.",
-        )
+        toast.success("Ganado creado correctamente.");
       }
 
-      router.push("/dashboard/ganado")
-      router.refresh()
+      router.push("/dashboard/ganado");
+      router.refresh();
     } catch (error) {
-      console.error(error)
-      toast("Ocurrió un error al guardar el ganado.",
-      )
+      console.error(error);
+      toast.error("Ocurrió un error al guardar el ganado.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -208,6 +214,26 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
                     />
                   </PopoverContent>
                 </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="diasNacida"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Días de Nacido</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Días de nacido" 
+                    {...field} 
+                    value={field.value === null ? "" : field.value}
+                    onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : null)}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -315,6 +341,42 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="puntaje"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Puntaje</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Puntaje" 
+                    {...field} 
+                    value={field.value === null ? "" : field.value}
+                    onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="remate"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Disponible para remate</FormLabel>
+                  <FormDescription>Indicar si el ganado está disponible para remate</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </div>
 
         <FormField
@@ -402,6 +464,5 @@ export function GanadoForm({ initialData, concursos, categories }: GanadoFormPro
         </Button>
       </form>
     </Form>
-  )
+  );
 }
-

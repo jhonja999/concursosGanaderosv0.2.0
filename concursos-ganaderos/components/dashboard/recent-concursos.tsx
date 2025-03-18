@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { prisma } from "@/lib/prisma"
 
+
 export async function RecentConcursos() {
   const concursos = await prisma.concurso.findMany({
     take: 5,
@@ -15,6 +16,18 @@ export async function RecentConcursos() {
       ganadoEnConcurso: true,
     },
   })
+
+  if (concursos.length === 0) {
+    return (
+      <div className="text-center py-10 border rounded-md">
+        <h3 className="text-lg font-medium">No hay concursos recientes</h3>
+        <p className="text-muted-foreground mt-2">Crea tu primer concurso para verlo aquí.</p>
+        <Link href="/dashboard/concursos/new" className="mt-4 inline-block">
+          <Button>Crear concurso</Button>
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-md border">
